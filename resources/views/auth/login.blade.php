@@ -1,80 +1,91 @@
-<x-auth.auth-layout>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion — TGether</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{ asset('js/tailwindcss.js') }}"></script>
+    <script>tailwind.config={theme:{extend:{colors:{primary:{DEFAULT:'#0374BA',50:'#e6f2fa',100:'#b3d8f0',600:'#025d95',700:'#024670'},secondary:{DEFAULT:'#64AC5A',600:'#508948'}}}}}</script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>* { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+</head>
+<body class="min-h-screen flex">
 
-    <h1 class="form-heading">Bon retour 👋</h1>
-    <p class="form-sub">Connectez-vous à votre compte TGether.</p>
-
-    {{-- Erreur globale --}}
-    @if ($errors->any())
-    <div style="display:flex;align-items:flex-start;gap:.75rem;background:#FFF0EF;border:1.5px solid #FFD0CC;border-radius:14px;padding:.875rem 1rem;margin-bottom:1.5rem;">
-        <span style="color:#FF3B30;font-size:1rem;line-height:1;margin-top:.1rem">⚠</span>
-        <p style="margin:0;font-size:.875rem;font-weight:600;color:#CC2A1F;">{{ $errors->first() }}</p>
+    {{-- Left: Image --}}
+    <div class="hidden lg:block lg:w-1/2 relative overflow-hidden">
+        <img src="{{ asset('images/login.jpg') }}" alt="TGether" class="absolute inset-0 w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/80 to-primary/40"></div>
+        <div class="relative h-full flex flex-col justify-between p-12">
+            <a href="{{ route('home') }}" class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white font-black text-xl">T</div>
+                <span class="text-2xl font-black text-white">TGether</span>
+            </a>
+            <div>
+                <h2 class="text-4xl font-black text-white leading-tight mb-4">Content de<br>vous revoir! 👋</h2>
+                <p class="text-white/80 text-lg">Connectez-vous pour accéder à vos trajets, réservations et bien plus encore.</p>
+            </div>
+        </div>
     </div>
-    @endif
 
-    <form method="POST" action="{{ route('login') }}" style="display:flex;flex-direction:column;gap:1.25rem;">
-        @csrf
+    {{-- Right: Form --}}
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
+        <div class="w-full max-w-md">
 
-        {{-- Email --}}
-        <div>
-            <label class="field-label" for="email">Adresse email</label>
-            <div class="field-icon-wrap">
-                <span class="fi-left">
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                    </svg>
-                </span>
-                <input type="email" id="email" name="email"
-                       value="{{ old('email') }}"
-                       placeholder="vous@exemple.cm"
-                       autofocus
-                       class="input-field {{ $errors->has('email') ? 'is-error' : '' }}" />
+            {{-- Mobile logo --}}
+            <div class="lg:hidden flex items-center gap-2 mb-8">
+                <div class="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-white font-black">T</div>
+                <span class="text-xl font-black text-gray-900">TGether</span>
             </div>
-        </div>
 
-        {{-- Mot de passe --}}
-        <div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;">
-                <label class="field-label" style="margin:0;" for="password">Mot de passe</label>
-                <a href="#" style="font-size:.8rem;font-weight:700;color:var(--blue);text-decoration:none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Mot de passe oublié ?</a>
+            <h1 class="text-3xl font-black text-gray-900 mb-2">Connexion</h1>
+            <p class="text-gray-500 text-sm mb-8">Entrez vos identifiants pour accéder à votre espace.</p>
+
+            @if($errors->any())
+            <div class="mb-5 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                @foreach($errors->all() as $error)<p>• {{ $error }}</p>@endforeach
             </div>
-            <div class="field-icon-wrap" style="position:relative;">
-                <span class="fi-left">
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                    </svg>
-                </span>
-                <input type="password" id="password" name="password"
-                       placeholder="••••••••"
-                       style="padding-right:3rem;"
-                       class="input-field {{ $errors->has('password') ? 'is-error' : '' }}" />
-                <button type="button" class="pw-eye" onclick="togglePw('password', this)" aria-label="Voir le mot de passe">
-                    <svg class="eye-on" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                    <svg class="eye-off hidden" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
-                    </svg>
+            @endif
+
+            <form action="{{ route('login') }}" method="POST" class="space-y-5">
+                @csrf
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Adresse email</label>
+                    <input type="email" name="email" value="{{ old('email') }}" required
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition"
+                        placeholder="vous@exemple.com">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Mot de passe</label>
+                    <input type="password" name="password" required
+                        class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition"
+                        placeholder="••••••••">
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="remember" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary">
+                        <span class="text-sm text-gray-600">Se souvenir de moi</span>
+                    </label>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-primary text-white py-3.5 rounded-xl font-bold text-sm hover:bg-primary-600 transition shadow-lg shadow-primary/25 hover:shadow-primary/40">
+                    Se connecter →
                 </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <span class="text-sm text-gray-500">Pas encore de compte? </span>
+                <a href="{{ route('register') }}" class="text-primary font-semibold text-sm hover:underline">Créer un compte</a>
+            </div>
+
+            <div class="mt-4 text-center">
+                <a href="{{ route('home') }}" class="text-xs text-gray-400 hover:text-gray-600 transition">← Retour à l'accueil</a>
             </div>
         </div>
-
-        {{-- Se souvenir --}}
-        <label style="display:flex;align-items:center;gap:.625rem;cursor:pointer;width:fit-content;">
-            <input type="checkbox" name="remember"
-                   style="width:16px;height:16px;border-radius:5px;accent-color:var(--blue);cursor:pointer;flex-shrink:0;" />
-            <span style="font-size:.875rem;font-weight:600;color:var(--mid);">Se souvenir de moi</span>
-        </label>
-
-        {{-- CTA --}}
-        <button type="submit" class="btn-primary" style="margin-top:.5rem;">
-            Se connecter →
-        </button>
-
-        <div class="divider"><span>ou</span></div>
-
-        <a href="{{ route('register') }}" class="btn-ghost">Créer un compte</a>
-
-    </form>
-
-</x-auth.auth-layout>
+    </div>
+</body>
+</html>

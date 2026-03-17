@@ -2,96 +2,71 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Conversation;
-use Illuminate\Http\JsonResponse;
+use App\Models\{Conversation, ConversationParticipant, Message, Booking};
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ConversationController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(Request $request): JsonResponse
+    public function index()
     {
-        $userId = $request->user()->id;
+        $userId = Auth::id();
+        $conversations = Conversation::whereHas('participants', fn($q) => $q->where('user_id', $userId))
+            ->with(['booking.passenger', 'booking.ride.driver', 'messages' => fn($q) => $q->latest('created_at')->limit(1)])
+            ->latest('created_at')
+            ->get();
 
-        $conversations = Conversation::whereHas('participants', fn($q) =>
-                $q->where('user_id', $userId)
-            )
-            ->with([
-                'booking.ride.origin',
-                'booking.ride.destination',
-                'participants.user',
-                'messages' => fn($q) => $q->latest('created_at')->limit(1),
-            ])
-            ->withCount(['messages as unread_count' => fn($q) =>
-                $q->where('is_read', false)->where('sender_id', '!=', $userId)
-            ])
-            ->orderByDesc('created_at')
-            ->paginate($request->per_page ?? 15);
-
-        return response()->json($conversations);
+        return view('conversations.index', compact('conversations'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function show(Conversation $conversation)
     {
-        //
+        $userId = Auth::id();
+        abort_unless($conversation->participants()->where('user_id', $userId)->exists(), 403);
+
+        $messages = $conversation->messages()->with('sender')->orderBy('created_at')->get();
+        $conversation->messages()->where('sender_id', '!=', $userId)->update(['is_read' => true]);
+
+        return view('conversations.show', compact('conversation', 'messages'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request, Booking $booking)
     {
-        //
-    }
+        $userId = Auth::id();
+        abort_if($booking->passenger_id !== $userId && $booking->ride->driver_id !== $userId, 403);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Request $request, Conversation $conversation): JsonResponse
-    {
-        // Marquer les messages comme lus
-        $conversation->messages()
-            ->where('sender_id', '!=', $request->user()->id)
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
-
-        $messages = $conversation->messages()
-            ->with('sender:id,first_name,last_name,avatar_url')
-            ->orderBy('created_at')
-            ->paginate($request->per_page ?? 50);
-
-        return response()->json([
-            'conversation' => $conversation->load('participants.user', 'booking.ride'),
-            'messages'     => $messages,
+        $conversation = $booking->conversation ?? Conversation::create([
+            'ride_id'    => $booking->ride_id,
+            'booking_id' => $booking->id,
         ]);
+
+        // Add both participants if new
+        foreach ([$booking->passenger_id, $booking->ride->driver_id] as $pid) {
+            $conversation->participants()->firstOrCreate(['user_id' => $pid], ['joined_at' => now()]);
+        }
+
+        $data = $request->validate(['content' => 'required|string|max:1000']);
+        Message::create([
+            'conversation_id' => $conversation->id,
+            'sender_id'       => $userId,
+            'content'         => $data['content'],
+        ]);
+
+        return redirect()->route('conversations.show', $conversation);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Conversation $conversation)
+    public function sendMessage(Request $request, Conversation $conversation)
     {
-        //
-    }
+        $userId = Auth::id();
+        abort_unless($conversation->participants()->where('user_id', $userId)->exists(), 403);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Conversation $conversation)
-    {
-        //
-    }
+        $data = $request->validate(['content' => 'required|string|max:1000']);
+        Message::create([
+            'conversation_id' => $conversation->id,
+            'sender_id'       => $userId,
+            'content'         => $data['content'],
+        ]);
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Conversation $conversation)
-    {
-        //
+        return back();
     }
 }
